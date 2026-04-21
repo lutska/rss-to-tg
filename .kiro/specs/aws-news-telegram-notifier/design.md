@@ -22,30 +22,30 @@ The system is designed for the RS School DevOps 2025 learning project and target
 flowchart TD
     %% ===== Event Trigger =====
     subgraph EVT[Event Trigger]
-        EB[EventBridge Rule\n(every 60 min)]
+        EB["EventBridge Rule\n(every 60 min)"]
     end
 
     %% ===== Compute =====
     subgraph CMP[Compute]
-        LF[Lambda Function\naws-news-notifier]
+        LF["Lambda Function\naws-news-notifier"]
     end
 
     %% ===== Storage / Config =====
     subgraph CFG[Configuration & State]
-        SSM_S["SSM Parameter Store\n/telegram/bot_token\n/telegram/chat_id"]
+        SSM_S["SSM Parameter Store\n/telegram/bot_token\n/notifier/telegram/chat_id"]
         SSM_ST["SSM Parameter Store\n`/notifier/state/{feed_hash}`"]
     end
 
     %% ===== External Sources =====
     subgraph EXT[External Services]
-        RSS[AWS What's New\nRSS Feed]
-        TG[Telegram Bot API]
+        RSS["AWS What's New\nRSS Feed"]
+        TG["Telegram Bot API"]
     end
 
     %% ===== Observability =====
     subgraph OBS[Observability & Reliability]
-        CW[CloudWatch Logs]
-        DLQ[SQS Dead Letter Queue]
+        CW["CloudWatch Logs"]
+        DLQ["SQS Dead Letter Queue"]
     end
 
     %% ===== Flows =====

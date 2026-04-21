@@ -20,20 +20,52 @@ The system is designed for the RS School DevOps 2025 learning project and target
 
 ```mermaid
 flowchart TD
-    EB[EventBridge Scheduled Rule\nevery 60 min] -->|invoke| LF[Lambda Function\naws-news-notifier]
-    LF -->|read secrets| SSM_S[SSM Parameter Store\n/notifier/telegram/bot_token\n/notifier/telegram/chat_id]
-    LF -->|read/write state| SSM_ST[SSM Parameter Store\n/notifier/state/{feed_hash}]
-    LF -->|fetch RSS| RSS[AWS What's New\nRSS Feed]
-    LF -->|sendMessage| TG[Telegram Bot API]
-    LF -->|logs| CW[CloudWatch Logs]
-    LF -->|on failure| DLQ[SQS Dead Letter Queue]
+    %% ===== Event Trigger =====
+    subgraph EVT[Event Trigger]
+        EB[EventBridge Rule\n(every 60 min)]
+    end
 
+    %% ===== Compute =====
+    subgraph CMP[Compute]
+        LF[Lambda Function\naws-news-notifier]
+    end
+
+    %% ===== Storage / Config =====
+    subgraph CFG[Configuration & State]
+        SSM_S["SSM Parameter Store\n/telegram/bot_token\n/telegram/chat_id"]
+        SSM_ST["SSM Parameter Store\n`/notifier/state/{feed_hash}`"]
+    end
+
+    %% ===== External Sources =====
+    subgraph EXT[External Services]
+        RSS[AWS What's New\nRSS Feed]
+        TG[Telegram Bot API]
+    end
+
+    %% ===== Observability =====
+    subgraph OBS[Observability & Reliability]
+        CW[CloudWatch Logs]
+        DLQ[SQS Dead Letter Queue]
+    end
+
+    %% ===== Flows =====
+    EB -->|invoke| LF
+    LF -->|read secrets| SSM_S
+    LF -->|read/write state| SSM_ST
+    LF -->|fetch RSS| RSS
+    LF -->|send message| TG
+    LF -->|logs| CW
+    LF -->|on failure| DLQ
+
+    %% ===== Styling =====
     style EB fill:#FF9900,color:#fff
     style LF fill:#FF9900,color:#fff
-    style SSM_S fill:#3F8624,color:#fff
-    style SSM_ST fill:#3F8624,color:#fff
     style DLQ fill:#FF9900,color:#fff
     style CW fill:#FF9900,color:#fff
+
+    style SSM_S fill:#3F8624,color:#fff
+    style SSM_ST fill:#3F8624,color:#fff
+
     style RSS fill:#232F3E,color:#fff
     style TG fill:#2CA5E0,color:#fff
 ```

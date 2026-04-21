@@ -28,6 +28,7 @@ EventBridge (schedule)
 │   ├── requirements.txt  # feedparser, requests
 │   ├── build.sh          # Builds function.zip for Terraform
 │   └── tests/            # pytest + hypothesis tests
+│   └── check_feed.py     # Debug utility to fetch latest RSS entry (GUID)
 ├── terraform/
 │   ├── main.tf           # All AWS resources
 │   └── variables.tf      # Input variables
@@ -36,7 +37,7 @@ EventBridge (schedule)
 
 ## Prerequisites
 
-- AWS CLI configured with appropriate credentials
+- AWS CLI configured with credentials and required IAM permissions. Check 'AWS IAM Permissions Required' at the end of this document
 - Terraform >= 1.0
 - Python 3.12
 - A Telegram bot token (from [@BotFather](https://t.me/BotFather))
@@ -51,6 +52,13 @@ EventBridge (schedule)
 3. Copy the bot token
 4. Add the bot as an admin to your channel
 5. Get your channel ID (e.g. `@yourchannel` or a numeric ID like `-1001234567890`)
+6. test it with:
+
+```bash
+curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/sendMessage" \
+  -d "chat_id=<YOUR_CHAT_ID>" \
+  -d "text=Hello from test"
+```
 
 ### 2. Build the Lambda package
 
@@ -74,10 +82,10 @@ terraform apply
 After `terraform apply`, replace the placeholder values with your real secrets:
 
 ```bash
-# bot_token — get this from @BotFather on Telegram (/newbot command)
+# bot_token — get this from @BotFather on Telegram after creating a new bot (see step 1)
 # format: <bot_id>:<random_string> 
-# e.g. --value "7123456789:AAFabcdefghijklmnopqrstuvwxyz123456" 
-  
+# example value for "YOUR_BOT_TOKEN" is "7123456789:AAFabcdefghijklmnopqrstuvwxyz123456"
+
 aws ssm put-parameter \
   --name /notifier/telegram/bot_token \
   --value "YOUR_BOT_TOKEN" \
@@ -87,7 +95,12 @@ aws ssm put-parameter \
 
 # chat_id — your channel username (with @) or numeric ID
 # get numeric ID by forwarding a channel message to @userinfobot on Telegram
-# e.g. --value "@myawsnewschannel" 
+# Chat ID can be found via:
+# https://api.telegram.org/bot<bot_token>/getUpdates
+
+# Note: the "-" symbol must not be omitted
+# example value: @myawsnewschannel  or  -1001234567890
+
 aws ssm put-parameter \
   --name /notifier/telegram/chat_id \
   --value "YOUR_CHANNEL_ID" \
@@ -115,6 +128,22 @@ environment         = "dev"
 project             = "rss-to-tg"
 ```
 
+## AWS IAM Permissions Required
+
+Your AWS user/role needs the following permissions to deploy this infrastructure.
+
+**Quick option — attach these AWS managed policies:**
+- `IAMFullAccess`
+- `AWSLambda_FullAccess`
+- `AmazonSSMFullAccess`
+- `AmazonSQSFullAccess`
+- `CloudWatchLogsFullAccess`
+- `AmazonEventBridgeFullAccess`
+
+**Minimal custom policy (recommended):**
+(see the file terraform/iam_policy.json for full JSON)
+
+
 ## Running Tests
 
 ```bash
@@ -131,7 +160,7 @@ terraform destroy
 ## How It Works
 
 1. EventBridge triggers the Lambda every 60 minutes (configurable)
-2. Lambda loads the Telegram bot token and chat ID from SSM SecureString parameters
+2. Lambda loads the Telegram "bot_token" and "chat ID" from SSM SecureString parameters
 3. For each configured RSS feed URL:
    - Fetches and parses the feed
    - Reads the last-seen entry ID from SSM
@@ -140,6 +169,14 @@ terraform destroy
    - Updates the last-seen ID in SSM
 4. All activity is logged to CloudWatch Logs
 5. Any unhandled failure routes the event to the SQS Dead Letter Queue
+
+## Troubleshooting. Debug RSS feed locally
+
+Run the local helper script to verify the RSS feed and see the latest entry:
+
+```bash
+python3 lambda/check_feed.py
+```
 
 ## Cost Estimate (eu-west-1, no free tier)
 

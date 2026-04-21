@@ -1,0 +1,123 @@
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "IAM",
+			"Effect": "Allow",
+			"Action": [
+				"iam:CreateRole",
+				"iam:DeleteRole",
+				"iam:GetRole",
+				"iam:PutRolePolicy",
+				"iam:DeleteRolePolicy",
+				"iam:GetRolePolicy",
+				"iam:TagRole",
+				"iam:UntagRole",
+				"iam:PassRole",
+				"iam:ListRolePolicies",
+				"iam:ListAttachedRolePolicies",
+				"iam:ListInstanceProfilesForRole"
+			],
+			"Resource": "arn:aws:iam::*:role/rss-to-tg-*"
+		},
+		{
+			"Sid": "Lambda",
+			"Effect": "Allow",
+			"Action": [
+				"lambda:CreateFunction",
+				"lambda:DeleteFunction",
+				"lambda:GetFunction",
+				"lambda:UpdateFunctionCode",
+				"lambda:UpdateFunctionConfiguration",
+				"lambda:AddPermission",
+				"lambda:RemovePermission",
+				"lambda:GetPolicy",
+				"lambda:ListVersionsByFunction",
+				"lambda:GetFunctionCodeSigningConfig",
+				"lambda:TagResource",
+				"lambda:UntagResource"
+			],
+			"Resource": "arn:aws:lambda:eu-west-1:*:function:rss-to-tg*"
+		},
+		{
+			"Sid": "LambdaGetConfig",
+			"Effect": "Allow",
+			"Action": [
+				"lambda:GetFunctionCodeSigningConfig"
+			],
+			"Resource": "*"
+		},
+		{
+			"Sid": "SSM",
+			"Effect": "Allow",
+			"Action": [
+				"ssm:PutParameter",
+				"ssm:GetParameter",
+				"ssm:GetParameters",
+				"ssm:DeleteParameter",
+				"ssm:AddTagsToResource",
+				"ssm:ListTagsForResource"
+			],
+			"Resource": [
+				"arn:aws:ssm:eu-west-1:*:parameter/notifier/telegram/chat_id",
+				"arn:aws:ssm:eu-west-1:*:parameter/notifier/telegram/bot_token"
+			]
+		},
+		{
+			"Sid": "SSMDescribe",
+			"Effect": "Allow",
+			"Action": [
+				"ssm:DescribeParameters",
+				"ssm:ListTagsForResource"
+			],
+			"Resource": "*"
+		},
+		{
+			"Sid": "SQS",
+			"Effect": "Allow",
+			"Action": [
+				"sqs:CreateQueue",
+				"sqs:DeleteQueue",
+				"sqs:GetQueueAttributes",
+				"sqs:SetQueueAttributes",
+				"sqs:TagQueue",
+				"sqs:ListQueueTags",
+				"sqs:GetQueueUrl"
+			],
+			"Resource": "arn:aws:sqs:eu-west-1:*:rss-to-tg-*"
+		},
+		{
+			"Sid": "CloudWatchLogs",
+			"Effect": "Allow",
+			"Action": [
+				"logs:CreateLogGroup",
+				"logs:DeleteLogGroup",
+				"logs:PutRetentionPolicy",
+				"logs:ListTagsLogGroup",
+				"logs:TagLogGroup",
+				"logs:UntagLogGroup",
+				"logs:DescribeLogGroups",
+				"logs:ListTagsForResource",
+				"logs:TagResource",
+				"logs:UntagResource"
+			],
+			"Resource": "*"
+		},
+		{
+			"Sid": "EventBridge",
+			"Effect": "Allow",
+			"Action": [
+				"events:PutRule",
+				"events:DeleteRule",
+				"events:DescribeRule",
+				"events:PutTargets",
+				"events:RemoveTargets",
+				"events:ListTargetsByRule",
+				"events:TagResource",
+				"events:UntagResource",
+				"events:ListTagsForResource"
+			],
+			"Resource": "arn:aws:events:eu-west-1:*:rule/rss-to-tg-*"
+		}
+	]
+}

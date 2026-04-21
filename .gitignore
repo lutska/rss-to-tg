@@ -20,3 +20,10 @@ terraform/.terraform.lock.hcl
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
 *.tfplan
+*.tfvars
+*.tfvars.json
+
+# Env files
+.env
+.env.*
+

@@ -44,7 +44,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
+    Statement = concat([
       {
         Effect = "Allow"
         Action = ["ssm:GetParameter"]
@@ -78,7 +78,22 @@ resource "aws_iam_role_policy" "lambda_policy" {
         Action   = ["sqs:SendMessage"]
         Resource = aws_sqs_queue.dlq.arn
       }
-    ]
+      ],
+      var.enable_weekly_digest ? [{
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:Query",
+          "dynamodb:Scan",
+          "dynamodb:DeleteItem",
+          "dynamodb:BatchWriteItem"
+        ]
+        Resource = [
+          aws_dynamodb_table.weekly_digest_entries[0].arn,
+          "${aws_dynamodb_table.weekly_digest_entries[0].arn}/index/*"
+        ]
+    }] : [])
   })
 }
 
@@ -160,21 +175,27 @@ resource "aws_lambda_function" "notifier" {
 # ─── EventBridge Schedule ────────────────────────────────────────────────────
 
 resource "aws_cloudwatch_event_rule" "schedule" {
+  count = var.enable_daily_notifications ? 1 : 0
+  
   name                = "${var.name_prefix}-schedule"
-  schedule_expression = var.schedule_expression
+  schedule_expression = var.daily_collector_schedule
 
   tags = local.common_tags
 }
 
 resource "aws_cloudwatch_event_target" "lambda" {
-  rule = aws_cloudwatch_event_rule.schedule.name
+  count = var.enable_daily_notifications ? 1 : 0
+  
+  rule = aws_cloudwatch_event_rule.schedule[0].name
   arn  = aws_lambda_function.notifier.arn
 }
 
 resource "aws_lambda_permission" "allow_eventbridge" {
+  count = var.enable_daily_notifications ? 1 : 0
+  
   statement_id  = "AllowExecutionFromEventBridge"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.notifier.function_name
   principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.schedule.arn
+  source_arn    = aws_cloudwatch_event_rule.schedule[0].arn
 }

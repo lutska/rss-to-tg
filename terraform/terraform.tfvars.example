@@ -1,0 +1,40 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# RSS-to-Telegram Configuration
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Basic Configuration
+region      = "eu-west-1"
+name_prefix = "rss-to-tg"
+feed_urls   = "https://aws.amazon.com/about-aws/whats-new/recent/feed/"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NOTIFICATION MODES - Choose One or Both
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Option 1: Daily Instant Notifications (sends immediately when entries found)
+enable_daily_notifications = false
+
+# Option 2: Weekly Digest (collects throughout week, sends Sunday 9 PM)
+enable_weekly_digest = true
+
+# ─── DAILY NOTIFICATIONS (if enabled) ──────────────────────────────────────
+daily_collector_schedule = "rate(60 minutes)"  # Check every hour
+
+# ─── WEEKLY DIGEST (if enabled) ────────────────────────────────────────────
+# Collector runs daily to accumulate entries throughout the week
+collector_schedule_primary = "cron(0 0 ? * * *)"   # Daily at midnight UTC
+collector_schedule_backup  = "cron(0 6 ? * * *)"   # Daily at 6 AM UTC
+
+# Digest sends on Sunday at 9 PM UTC
+digest_schedule_expression = "cron(0 21 ? * SUN *)"
+digest_title               = "AWS Weekly"
+digest_days                = 7
+
+# Common Settings
+lambda_timeout     = 60
+lambda_memory      = 128
+dlq_retention_days = 14
+entry_ttl_days     = 14
+environment        = "dev"
+project            = "rss-to-tg"
+

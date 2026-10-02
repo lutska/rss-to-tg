@@ -19,6 +19,9 @@ terraform/.terraform/
 terraform/.terraform.lock.hcl
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
+terraform/terraform.tfvars
+*.auto.tfvars
+*.auto.tfvars.json
 *.tfplan
 *.tfvars
 *.tfvars.json

@@ -41,63 +41,6 @@ def put_param(ssm, name, value):
 
 # ── RSS Processing ───────────────────────────────────────────────────────────
 
-def normalize_category(category_str):
-    """Normalize and beautify category name.
-    
-    Converts:
-    - "aws-news" → "AWS News"
-    - "machine-learning" → "Machine Learning"
-    - "cloud-security" → "Cloud Security"
-    - "general:products/aws Security Hub,marketing:architecture/security" → "Security"
-    """
-    if not category_str:
-        return "General"
-    
-    # Clean up complex paths (e.g., "general:products/aws/...")
-    # Take only the last meaningful part after slashes/colons
-    category_str = str(category_str).strip()
-    
-    # Extract meaningful parts from complex paths
-    # e.g., "general:products/aws Security Hub" → "security hub"
-    if "/" in category_str or ":" in category_str:
-        # Split by common delimiters and take meaningful words
-        parts = category_str.replace("/", " ").replace(":", " ").replace(",", " ")
-        words = [w.strip() for w in parts.split() if w.strip() and len(w.strip()) > 2]
-        # Use the last few meaningful words (usually the most specific)
-        if words:
-            category_str = " ".join(words[-3:])  # Take last 3 words for context
-        else:
-            category_str = "General"
-    
-    # Replace hyphens and underscores with spaces
-    normalized = category_str.replace("-", " ").replace("_", " ")
-    
-    # Title case each word
-    words = normalized.split()
-    capitalized = []
-    
-    for word in words:
-        word_upper = word.upper()
-        if word_upper == "AWS":
-            capitalized.append("AWS")
-        elif word_upper == "ML":
-            capitalized.append("ML")
-        elif word_upper == "AI":
-            capitalized.append("AI")
-        elif word_upper == "AND":
-            capitalized.append("&")  # Replace "and" with "&"
-        else:
-            capitalized.append(word.capitalize())
-    
-    result = " ".join(capitalized)
-    
-    # Keep length reasonable (max 40 chars for display)
-    if len(result) > 40:
-        result = result[:37] + "..."
-    
-    return result if result.strip() else "General"
-
-
 def fetch_entries(feed_url):
     """Fetch and parse RSS feed entries."""
     feed = feedparser.parse(feed_url)
@@ -110,8 +53,7 @@ def fetch_entries(feed_url):
         # Extract category/service name
         category = "General"
         if hasattr(e, "tags") and e.tags:
-            raw_category = e.tags[0].get("term", "General")
-            category = normalize_category(raw_category)
+            category = ",".join(tag.get("term", "") for tag in e.tags) or "General"
         
         entries.append({
             "guid": e.get("id") or e.get("link", ""),

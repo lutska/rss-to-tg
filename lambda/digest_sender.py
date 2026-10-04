@@ -74,22 +74,26 @@ def normalize_category(category_str):
     - "General" → "General News"
     - "general:products/aws/..." → "AWS Security"
     """
-    if not category_str or category_str == "General":
+    category_str = str(category_str or "").strip()
+    if not category_str or category_str.lower() == "general":
         return "📰 General News"
-    
-    category_str = str(category_str).strip()
-    
-    # Clean up complex paths (e.g., "general:products/aws Security Hub,marketing:architecture/security")
-    # Take only the last meaningful part
-    if "/" in category_str or ":" in category_str:
-        # Split by common delimiters and take meaningful words
-        parts = category_str.replace("/", " ").replace(":", " ").replace(",", " ")
-        words = [w.strip() for w in parts.split() if w.strip() and len(w.strip()) > 2]
-        # Use the last few meaningful words (usually the most specific)
-        if words:
-            category_str = " ".join(words[-3:])  # Take last 3 words for context
-        else:
-            category_str = "General"
+
+    # The feed can put several tags in one category; use a product tag for
+    # display while leaving the original value untouched in DynamoDB.
+    products = [tag.strip().split("general:products/", 1)[1]
+                for tag in category_str.split(",")
+                if tag.strip().startswith("general:products/")]
+    services = [product for product in products if product != "aws-govcloud-us"]
+    if services:
+        category_str = services[0].replace("-", " ")
+
+    known_topics = {
+        "aws-news", "aws news", "machine-learning", "machine learning",
+        "cloud-security", "cloud security", "devops", "database",
+        "storage", "serverless", "networking", "general news",
+    }
+    if not services and category_str.lower() not in known_topics:
+        return "📰 General News"
     
     # Replace hyphens and underscores with spaces
     normalized = category_str.replace("-", " ").replace("_", " ")
@@ -108,6 +112,12 @@ def normalize_category(category_str):
             capitalized.append("AI")
         elif word_upper == "AND":
             capitalized.append("&")  # Replace "and" with "&"
+        elif word_upper in {"EKS", "ECS", "EC2", "S3", "IAM", "EMR", "RDS"}:
+            capitalized.append(word_upper)
+        elif word_upper == "DYNAMODB":
+            capitalized.append("DynamoDB")
+        elif word_upper == "GUARDDUTY":
+            capitalized.append("GuardDuty")
         else:
             capitalized.append(word.capitalize())
     

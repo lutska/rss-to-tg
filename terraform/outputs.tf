@@ -14,17 +14,17 @@ output "lambda_function_name" {
 
 output "eventbridge_rule_name" {
   description = "Name of the EventBridge rule that triggers Lambda"
-  value       = aws_cloudwatch_event_rule.schedule.name
+  value       = var.enable_daily_notifications ? aws_cloudwatch_event_rule.schedule[0].name : "Daily notifications disabled"
 }
 
 output "eventbridge_rule_arn" {
   description = "ARN of the EventBridge rule"
-  value       = aws_cloudwatch_event_rule.schedule.arn
+  value       = var.enable_daily_notifications ? aws_cloudwatch_event_rule.schedule[0].arn : "Daily notifications disabled"
 }
 
 output "eventbridge_schedule_expression" {
   description = "The schedule expression for the EventBridge rule (cron format)"
-  value       = aws_cloudwatch_event_rule.schedule.schedule_expression
+  value       = var.enable_daily_notifications ? aws_cloudwatch_event_rule.schedule[0].schedule_expression : "Daily notifications disabled"
 }
 
 # ─── SQS Dead Letter Queue Outputs ───────────────────────────────────────────
